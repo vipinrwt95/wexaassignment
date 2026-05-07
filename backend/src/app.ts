@@ -3,6 +3,8 @@ import cors from "cors";
 
 import authRoutes from "./routes/authRoutes";
 import productRoutes from "./routes/productRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
+import  settingRoutes from "./routes/settingRoutes";
 
 const app = express();
 
@@ -24,5 +26,6 @@ app.post("/test", (req: Request, res: Response) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
-
+app.use("/api/settings", settingRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 export default app;
