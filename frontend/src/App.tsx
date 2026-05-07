@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Settings from "./pages/Settings";
 import Navbar from "./components/Navbar";
+import Auth from "./pages/Auth";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem("token");
@@ -26,9 +27,11 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" />} />
-
+{/* 
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<Signup />} /> */}
+        <Route path="/login" element={<Auth />} />
+<Route path="/signup" element={<Auth />} />
 
         <Route
           path="/dashboard"
