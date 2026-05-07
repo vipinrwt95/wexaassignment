@@ -1,6 +1,7 @@
 import { Response } from "express";
 import Product from "../models/Product";
 import { AuthRequest } from "../middleware/authMiddleware";
+import Organization from "../models/Organization";
 
 export const createProduct = async (req: AuthRequest, res: Response) => {
   try {
@@ -51,16 +52,37 @@ export const createProduct = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getProducts = async (req: AuthRequest, res: Response) => {
+
+
+export const getProducts = async (
+  req: AuthRequest,
+  res: Response
+) => {
   try {
+    const organizationId = req.user?.organizationId;
+
+    const organization = await Organization.findById(
+      organizationId
+    );
+
+    const defaultThreshold =
+      organization?.defaultLowStockThreshold ?? 5;
+
     const products = await Product.find({
-      organizationId: req.user?.organizationId,
+      organizationId,
     }).sort({ createdAt: -1 });
+
+    const formattedProducts = products.map((product) => ({
+      ...product.toObject(),
+
+      lowStockThreshold:
+        product.lowStockThreshold ?? defaultThreshold,
+    }));
 
     return res.json({
       success: true,
-      count: products.length,
-      products,
+      count: formattedProducts.length,
+      products: formattedProducts,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -153,6 +175,51 @@ export const deleteProduct = async (req: AuthRequest, res: Response) => {
     return res.json({
       success: true,
       message: "Product deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+export const adjustStock = async (req: AuthRequest, res: Response) => {
+  try {
+    const { adjustment } = req.body;
+
+    if (!adjustment || isNaN(adjustment)) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid adjustment is required",
+      });
+    }
+
+    const product = await Product.findOne({
+      _id: req.params.id,
+      organizationId: req.user?.organizationId,
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    product.quantityOnHand += Number(adjustment);
+
+    if (product.quantityOnHand < 0) {
+      product.quantityOnHand = 0;
+    }
+
+    await product.save();
+
+    return res.json({
+      success: true,
+      message: "Stock updated successfully",
+      product,
     });
   } catch (error: any) {
     return res.status(500).json({

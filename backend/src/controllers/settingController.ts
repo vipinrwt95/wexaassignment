@@ -1,36 +1,40 @@
-import { Request, Response } from "express";
-import Setting from "../models/Setting";
+import { Response } from "express";
+import Organization from "../models/Organization";
+import { AuthRequest } from "../middleware/authMiddleware";
 
-export const getSettings = async (req: Request, res: Response) => {
+export const getSettings = async (req: AuthRequest, res: Response) => {
   try {
-    const organizationId = (req as any).user.organizationId;
+    const organizationId = req.user?.organizationId;
 
-    let settings = await Setting.findOne({ organizationId });
+    const organization = await Organization.findById(organizationId);
 
-    if (!settings) {
-      settings = await Setting.create({
-        organizationId,
-        defaultLowStockThreshold: 5,
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
       });
     }
 
     return res.json({
       success: true,
-      settings,
+      settings: {
+        defaultLowStockThreshold:
+          organization.defaultLowStockThreshold ?? 5,
+      },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Get Settings Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message,
     });
   }
 };
 
-export const updateSettings = async (req: Request, res: Response) => {
+export const updateSettings = async (req: AuthRequest, res: Response) => {
   try {
-    const organizationId = (req as any).user.organizationId;
+    const organizationId = req.user?.organizationId;
     const { defaultLowStockThreshold } = req.body;
 
     if (
@@ -44,28 +48,38 @@ export const updateSettings = async (req: Request, res: Response) => {
       });
     }
 
-    const settings = await Setting.findOneAndUpdate(
-      { organizationId },
+    const organization = await Organization.findByIdAndUpdate(
+      organizationId,
       {
-        defaultLowStockThreshold,
+        defaultLowStockThreshold: Number(defaultLowStockThreshold),
       },
       {
         new: true,
-        upsert: true,
+        runValidators: true,
       }
     );
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
 
     return res.json({
       success: true,
       message: "Settings updated successfully",
-      settings,
+      settings: {
+        defaultLowStockThreshold:
+          organization.defaultLowStockThreshold ?? 5,
+      },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update Settings Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message,
     });
   }
 };

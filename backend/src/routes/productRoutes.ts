@@ -16,4 +16,7 @@ router.put("/:id", protect, productController.updateProduct);
 
 router.delete("/:id", protect, productController.deleteProduct);
 
+router.post("/:id/adjust-stock",protect,productController.adjustStock
+);
+
 export default router;

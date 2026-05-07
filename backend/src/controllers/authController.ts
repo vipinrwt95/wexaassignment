@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 import User from "../models/User";
 import Organization from "../models/Organization";
-import Setting from "../models/Setting";
+
 
 const generateToken = (userId: string, organizationId: string): string => {
   return jwt.sign(
@@ -38,10 +38,7 @@ export const signup = async (req: Request, res: Response) => {
       name: organizationName,
     });
 
-    await Setting.create({
-  organizationId: organization._id,
-  defaultLowStockThreshold: 5,
-});
+  
 
     const hashedPassword = await bcrypt.hash(password, 10);
 

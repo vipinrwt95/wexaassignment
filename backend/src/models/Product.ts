@@ -62,9 +62,8 @@ const productSchema = new Schema<IProduct>(
     },
 
     lowStockThreshold: {
-      type: Number,
-      default: 5,
-    },
+  type: Number,
+},
     lastUpdatedBy: {
   type: String,
 },
