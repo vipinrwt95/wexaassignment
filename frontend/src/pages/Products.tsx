@@ -40,6 +40,7 @@ const Products = () => {
 
   const resetForm = () => {
     setEditingId(null);
+    setError("");
 
     setForm({
       name: "",
@@ -55,14 +56,26 @@ const Products = () => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!form.name.trim()) {
+      setError("Product name is required");
+      return;
+    }
+
+    if (!form.sku.trim()) {
+      setError("SKU is required");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     const payload = {
-      name: form.name,
-      sku: form.sku,
-      description: form.description,
-      quantityOnHand: Number(form.quantityOnHand),
+      name: form.name.trim(),
+      sku: form.sku.trim(),
+      description: form.description.trim(),
+      quantityOnHand: form.quantityOnHand
+        ? Number(form.quantityOnHand)
+        : 0,
       costPrice: form.costPrice ? Number(form.costPrice) : undefined,
       sellingPrice: form.sellingPrice
         ? Number(form.sellingPrice)
@@ -90,6 +103,7 @@ const Products = () => {
 
   const editProduct = (product: Product) => {
     setEditingId(product._id);
+    setError("");
 
     setForm({
       name: product.name,
@@ -105,25 +119,18 @@ const Products = () => {
         : "",
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const deleteProduct = async (id: string) => {
     const yes = confirm("Delete this product?");
-
     if (!yes) return;
 
     await api.delete(`/products/${id}`);
     fetchProducts();
   };
 
-  const adjustStock = async (
-    productId: string,
-    adjustment: number
-  ) => {
+  const adjustStock = async (productId: string, adjustment: number) => {
     await api.post(`/products/${productId}/adjust-stock`, {
       adjustment,
     });
@@ -188,10 +195,11 @@ const Products = () => {
           <form onSubmit={submit} className="space-y-5">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Product Name
+                Product Name <span className="text-red-500">*</span>
               </label>
 
               <input
+                required
                 className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 placeholder="Enter product name"
                 value={form.name}
@@ -203,10 +211,11 @@ const Products = () => {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                SKU
+                SKU <span className="text-red-500">*</span>
               </label>
 
               <input
+                required
                 className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter SKU"
                 value={form.sku}
@@ -243,6 +252,7 @@ const Products = () => {
 
                 <input
                   type="number"
+                  min="0"
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
                   value={form.quantityOnHand}
@@ -262,6 +272,7 @@ const Products = () => {
 
                 <input
                   type="number"
+                  min="0"
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="5"
                   value={form.lowStockThreshold}
@@ -283,6 +294,7 @@ const Products = () => {
 
                 <input
                   type="number"
+                  min="0"
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
                   value={form.costPrice}
@@ -302,6 +314,7 @@ const Products = () => {
 
                 <input
                   type="number"
+                  min="0"
                   className="w-full border border-gray-200 rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="0"
                   value={form.sellingPrice}
@@ -384,9 +397,7 @@ const Products = () => {
                     <td className="py-5">
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() =>
-                            adjustStock(product._id, -10)
-                          }
+                          onClick={() => adjustStock(product._id, -10)}
                           className="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xl font-bold"
                         >
                           -
@@ -399,9 +410,7 @@ const Products = () => {
                         </div>
 
                         <button
-                          onClick={() =>
-                            adjustStock(product._id, 10)
-                          }
+                          onClick={() => adjustStock(product._id, 10)}
                           className="w-9 h-9 rounded-xl bg-green-50 hover:bg-green-100 text-green-600 text-xl font-bold"
                         >
                           +
@@ -437,9 +446,7 @@ const Products = () => {
                         </button>
 
                         <button
-                          onClick={() =>
-                            deleteProduct(product._id)
-                          }
+                          onClick={() => deleteProduct(product._id)}
                           className="px-5 py-2 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-semibold transition"
                         >
                           Delete
